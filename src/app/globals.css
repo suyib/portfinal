@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+/* Placeholder styling only — replace with the real design. */
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Minimal Markdown typography */
+.prose > * + * { margin-top: 0.75em; }
+.prose h1, .prose h2, .prose h3 { font-weight: 600; margin-top: 1.25em; }
+.prose ul { list-style: disc; padding-left: 1.25em; }
+.prose ol { list-style: decimal; padding-left: 1.25em; }
+.prose a { text-decoration: underline; }
+.prose blockquote { border-left: 3px solid #d4d4d4; padding-left: 1em; color: #525252; }
+.prose code { font-family: var(--font-mono), monospace; font-size: 0.9em; }
+.prose table { border-collapse: collapse; }
+.prose th, .prose td { border: 1px solid #e5e5e5; padding: 0.25em 0.5em; }
+
+/* Admin UI */
+@layer components {
+  .admin .input {
+    @apply block w-full rounded border border-neutral-300 bg-white px-2 py-1.5 text-sm;
+  }
+  .admin .card {
+    @apply rounded border border-neutral-200 p-4;
+  }
+  .admin .btn {
+    @apply rounded bg-neutral-900 px-3 py-1.5 text-sm text-white disabled:opacity-50;
+  }
+  .admin .btn-danger {
+    @apply rounded bg-red-700 px-3 py-1.5 text-sm text-white disabled:opacity-50;
+  }
+  .admin .btn-sm {
+    @apply rounded border border-neutral-300 bg-white px-2 py-0.5 text-xs disabled:opacity-50;
+  }
+  .admin .btn-sm-danger {
+    @apply rounded border border-red-300 bg-white px-2 py-0.5 text-xs text-red-700 disabled:opacity-50;
+  }
+  .admin .badge {
+    @apply rounded px-2 py-0.5 text-xs;
+  }
+  .admin .badge-draft { @apply bg-neutral-200; }
+  .admin .badge-published { @apply bg-green-100 text-green-800; }
+  .admin .badge-archived { @apply bg-amber-100 text-amber-800; }
+}
