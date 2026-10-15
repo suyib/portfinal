@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ActionButton, ActionForm, Field, Submit } from '@/components/admin/action-form'
 import { AttachSelects, MediaUploader } from '@/components/admin/media-uploader'
+import { RichText } from '@/components/admin/rich-text'
 import { adminGetProject } from '@/lib/data/admin'
 import type { Iteration, Media, Outcome, ProjectDetail, Section } from '@/lib/data/types'
 import { mediaSrc } from '@/lib/media'
@@ -43,23 +44,6 @@ export default async function EditProjectPage({ params }: PageProps<'/admin/proj
         </Link>
         <h1 className="w-full text-2xl font-semibold">{project.title}</h1>
         <span className={`badge badge-${project.status}`}>{project.status}</span>
-        {project.status === 'published' ? (
-          <>
-            <Link href={`/work/${project.slug}`} target="_blank" className="text-sm underline">
-              View live ↗
-            </Link>
-            <ActionButton action={setProjectStatus} fields={{ id: project.id, status: 'draft' }}>
-              Unpublish
-            </ActionButton>
-          </>
-        ) : (
-          <ActionButton action={setProjectStatus} fields={{ id: project.id, status: 'published' }}>
-            Publish
-          </ActionButton>
-        )}
-        <Link href={`/admin/projects/${project.id}/preview`} target="_blank" className="text-sm underline">
-          Preview ↗
-        </Link>
       </header>
 
       <nav className="flex flex-wrap gap-4 text-sm" aria-label="Jump to">
@@ -87,7 +71,7 @@ export default async function EditProjectPage({ params }: PageProps<'/admin/proj
       <Block
         id="sections"
         title="Process"
-        hint="The story of the project, in order: research, define, ideate, prototype, test… Bodies are Markdown."
+        hint="The story of the project, in order: research, define, ideate, prototype, test…"
       >
         {project.sections.map((s) => (
           <Item key={s.id} move={moveSection} remove={deleteSection} id={s.id} summary={`${s.kind} · ${s.title}`}>
@@ -157,7 +141,7 @@ export default async function EditProjectPage({ params }: PageProps<'/admin/proj
         <h2 className="text-lg font-semibold text-red-800">Delete project</h2>
         <p className="text-sm">
           Permanently deletes this project, all its sections, iterations, outcomes and uploaded files.
-          Consider <em>archiving</em> it instead (Details → Status).
+          Consider <em>archiving</em> it instead (bottom bar).
         </p>
         <ActionForm action={deleteProject} className="flex flex-wrap items-end gap-3">
           <input type="hidden" name="id" value={project.id} />
@@ -167,6 +151,8 @@ export default async function EditProjectPage({ params }: PageProps<'/admin/proj
           <Submit className="btn-danger">Delete forever</Submit>
         </ActionForm>
       </section>
+
+      <PublishBar project={project} />
     </div>
   )
 }
@@ -226,6 +212,58 @@ function AddNew({ label, children }: { label: string; children: React.ReactNode 
   )
 }
 
+/**
+ * Pinned to the bottom of the screen so publishing is always one obvious,
+ * separate step from saving. Saving never changes visibility.
+ */
+function PublishBar({ project: p }: { project: ProjectDetail }) {
+  const preview = (
+    <Link href={`/admin/projects/${p.id}/preview`} target="_blank" className="text-sm underline">
+      Preview ↗
+    </Link>
+  )
+  const setStatus = (status: 'draft' | 'published' | 'archived', label: string, className: string, confirm?: string) => (
+    <ActionButton action={setProjectStatus} fields={{ id: p.id, status }} className={className} confirm={confirm}>
+      {label}
+    </ActionButton>
+  )
+
+  return (
+    <div className="sticky-actions" role="region" aria-label="Publishing">
+      {p.status === 'draft' && (
+        <>
+          <p className="mr-auto text-sm">
+            <strong>Draft.</strong> Only you can see this project. Saved changes stay private until you publish.
+          </p>
+          {preview}
+          {setStatus('archived', 'Archive', 'btn-sm')}
+          {setStatus('published', 'Publish project', 'btn-publish')}
+        </>
+      )}
+      {p.status === 'published' && (
+        <>
+          <p className="mr-auto text-sm">
+            <strong className="text-green-800">Published.</strong> Saved changes go live straight away.
+          </p>
+          <Link href={`/work/${p.slug}`} target="_blank" className="text-sm underline">
+            View live ↗
+          </Link>
+          {setStatus('draft', 'Unpublish', 'btn-sm', 'Take this project off the public site?')}
+        </>
+      )}
+      {p.status === 'archived' && (
+        <>
+          <p className="mr-auto text-sm">
+            <strong>Archived.</strong> Hidden from the site and kept for reference.
+          </p>
+          {preview}
+          {setStatus('draft', 'Restore to draft', 'btn-sm')}
+        </>
+      )}
+    </div>
+  )
+}
+
 function DetailsForm({ project: p }: { project: ProjectDetail }) {
   return (
     <section id="details" className="space-y-3">
@@ -263,24 +301,15 @@ function DetailsForm({ project: p }: { project: ProjectDetail }) {
             <input name="tags" defaultValue={p.tags.join(', ')} className="input" />
           </Field>
         </div>
-        <Field name="problem" label="The problem" hint="Markdown">
-          <textarea name="problem" defaultValue={p.problem} rows={5} className="input" />
+        <Field as="div" name="problem" label="The problem">
+          <RichText name="problem" label="The problem" defaultValue={p.problem} placeholder="What was the brief or challenge?" />
         </Field>
-        <Field name="solution" label="The solution (TL;DR)" hint="Markdown">
-          <textarea name="solution" defaultValue={p.solution} rows={5} className="input" />
+        <Field as="div" name="solution" label="The solution (TL;DR)">
+          <RichText name="solution" label="The solution" defaultValue={p.solution} placeholder="The short answer, up top" />
         </Field>
-        <div className="flex flex-wrap items-end gap-6">
-          <Field name="status" label="Status">
-            <select name="status" defaultValue={p.status} className="input">
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-              <option value="archived">Archived</option>
-            </select>
-          </Field>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" name="featured" defaultChecked={p.featured} /> Featured
-          </label>
-        </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" name="featured" defaultChecked={p.featured} /> Featured
+        </label>
         <Submit>Save details</Submit>
       </ActionForm>
     </section>
@@ -327,8 +356,8 @@ function SectionForm({ projectId, section: s }: { projectId: string; section?: S
           <input name="title" defaultValue={s?.title} required className="input" />
         </Field>
       </div>
-      <Field name="body" label="Body" hint="Markdown">
-        <textarea name="body" defaultValue={s?.body} rows={10} className="input" />
+      <Field as="div" name="body" label="Body">
+        <RichText name="body" label="Section body" defaultValue={s?.body} minRows={8} />
       </Field>
       <Submit>{s ? 'Save section' : 'Add section'}</Submit>
     </ActionForm>
@@ -369,14 +398,14 @@ function IterationForm({
           ))}
         </select>
       </Field>
-      <Field name="description" label="What this version was" hint="Markdown">
-        <textarea name="description" defaultValue={it?.description} rows={4} className="input" />
+      <Field as="div" name="description" label="What this version was">
+        <RichText name="description" label="What this version was" defaultValue={it?.description} />
       </Field>
-      <Field name="feedback" label="What we learned" hint="Testing results, critique, data. Markdown">
-        <textarea name="feedback" defaultValue={it?.feedback} rows={4} className="input" />
+      <Field as="div" name="feedback" label="What we learned" hint="Testing results, critique, data">
+        <RichText name="feedback" label="What we learned" defaultValue={it?.feedback} />
       </Field>
-      <Field name="changes" label="What changed as a result" hint="Markdown">
-        <textarea name="changes" defaultValue={it?.changes} rows={4} className="input" />
+      <Field as="div" name="changes" label="What changed as a result">
+        <RichText name="changes" label="What changed as a result" defaultValue={it?.changes} />
       </Field>
       <Submit>{it ? 'Save iteration' : 'Add iteration'}</Submit>
     </ActionForm>

@@ -70,15 +70,18 @@ export function Field({
   label,
   hint,
   children,
+  as: Tag = 'label',
 }: {
   name: string
   label: string
   hint?: string
   children: ReactNode
+  /** 'div' for composite controls (e.g. the rich text editor) that contain buttons */
+  as?: 'label' | 'div'
 }) {
   const errors = use(StateContext)?.fieldErrors?.[name]
   return (
-    <label className="block space-y-1">
+    <Tag className="block space-y-1">
       <span className="block text-sm font-medium">{label}</span>
       {children}
       {hint && <span className="block text-xs text-neutral-500">{hint}</span>}
@@ -87,7 +90,7 @@ export function Field({
           {e}
         </span>
       ))}
-    </label>
+    </Tag>
   )
 }
 

@@ -18,6 +18,7 @@ import {
   outcomeSchema,
   sectionSchema,
   settingsSchema,
+  STATUSES,
   updateMediaSchema,
   updateProjectSchema,
 } from '@/lib/validation'
@@ -174,7 +175,7 @@ export async function updateProject(_prev: ActionState, formData: FormData): Pro
 export async function setProjectStatus(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const { supabase } = await requireAdmin()
   const parsed = z
-    .object({ id: z.uuid(), status: updateProjectSchema.shape.status })
+    .object({ id: z.uuid(), status: z.enum(STATUSES) })
     .safeParse(formToObject(formData))
   if (!parsed.success) return invalid(parsed.error)
 

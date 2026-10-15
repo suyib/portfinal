@@ -58,7 +58,7 @@ export const updateProjectSchema = z.object({
   tags: csv(20),
   problem: markdown,
   solution: markdown,
-  status: z.enum(STATUSES),
+  // status is changed only through setProjectStatus (the publish bar)
   featured: checkbox,
 })
 
